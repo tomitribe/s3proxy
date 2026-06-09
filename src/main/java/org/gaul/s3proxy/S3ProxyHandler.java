@@ -187,8 +187,12 @@ public class S3ProxyHandler {
             AwsHttpHeaders.ACL,
             AwsHttpHeaders.API_VERSION,
             AwsHttpHeaders.CHECKSUM_ALGORITHM,  // TODO: ignoring header
+            AwsHttpHeaders.CHECKSUM_CRC32,  // validated on PutObject
+            AwsHttpHeaders.CHECKSUM_CRC32C,  // validated on PutObject
             AwsHttpHeaders.CHECKSUM_CRC64NVME,  // TODO: ignoring header
             AwsHttpHeaders.CHECKSUM_MODE,  // TODO: ignoring header
+            AwsHttpHeaders.CHECKSUM_SHA1,  // validated on PutObject
+            AwsHttpHeaders.CHECKSUM_SHA256,  // validated on PutObject
             AwsHttpHeaders.CONTENT_SHA256,
             AwsHttpHeaders.COPY_SOURCE,
             AwsHttpHeaders.COPY_SOURCE_IF_MATCH,
@@ -2156,6 +2160,13 @@ public class S3ProxyHandler {
             return;
         }
 
+        // Validate a precomputed flexible-checksum header against the body.
+        // A mismatch throws BAD_DIGEST while the body streams, so the backend
+        // never commits the blob -- matching Amazon S3.  Checksums the SDK
+        // computes itself arrive in the chunk trailer and are validated by
+        // ChunkedInputStream instead.
+        is = maybeValidateChecksum(request, is, contentLength);
+
         var options = new PutOptions2()
                 .setBlobAccess(access)
                 .setIfMatch(ifMatch)
@@ -2189,6 +2200,36 @@ public class S3ProxyHandler {
         addCorsResponseHeader(request, response);
 
         response.addHeader(HttpHeaders.ETAG, maybeQuoteETag(eTag));
+    }
+
+    /**
+     * Wrap the body in a stream that validates it against a precomputed
+     * flexible-checksum header, if one is present.  Returns the input
+     * unchanged when no supported checksum header is set.
+     */
+    @SuppressWarnings("deprecation")  // Hashing.crc32{,c} are @Beta
+    private static InputStream maybeValidateChecksum(
+            HttpServletRequest request, InputStream is, long contentLength) {
+        String value;
+        if ((value = request.getHeader(
+                AwsHttpHeaders.CHECKSUM_SHA256)) != null) {
+            return new ChecksumValidatingInputStream(is, Hashing.sha256(),
+                    /*bigEndianInt=*/ false, "SHA256", value, contentLength);
+        } else if ((value = request.getHeader(
+                AwsHttpHeaders.CHECKSUM_SHA1)) != null) {
+            return new ChecksumValidatingInputStream(is, Hashing.sha1(),
+                    /*bigEndianInt=*/ false, "SHA1", value, contentLength);
+        } else if ((value = request.getHeader(
+                AwsHttpHeaders.CHECKSUM_CRC32)) != null) {
+            return new ChecksumValidatingInputStream(is, Hashing.crc32(),
+                    /*bigEndianInt=*/ true, "CRC32", value, contentLength);
+        } else if ((value = request.getHeader(
+                AwsHttpHeaders.CHECKSUM_CRC32C)) != null) {
+            return new ChecksumValidatingInputStream(is, Hashing.crc32c(),
+                    /*bigEndianInt=*/ true, "CRC32C", value, contentLength);
+        }
+        // TODO: Guava does not support x-amz-checksum-crc64nvme
+        return is;
     }
 
     private void handlePostBlob(HttpServletRequest request,

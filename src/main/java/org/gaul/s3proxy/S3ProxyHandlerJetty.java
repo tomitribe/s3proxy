@@ -173,6 +173,16 @@ final class S3ProxyHandlerJetty extends AbstractHandler {
             baseRequest.setHandled(true);
             return;
         } catch (Throwable throwable) {
+            // Backends may wrap an S3Exception in an unchecked exception (e.g.
+            // the nio2 providers rethrow IOException as RuntimeException), so
+            // unwrap it here as well as in the IOException branch above.
+            var s3Cause = Throwables2.getFirstThrowableOfType(throwable,
+                    S3Exception.class);
+            if (s3Cause != null) {
+                sendS3Exception(request, response, s3Cause);
+                baseRequest.setHandled(true);
+                return;
+            }
             if (Throwables2.getFirstThrowableOfType(throwable,
                     AuthorizationException.class) != null) {
                 S3ErrorCode code = S3ErrorCode.ACCESS_DENIED;
