@@ -9,7 +9,7 @@
 
   <groupId>org.tomitribe.s3proxy</groupId>
   <artifactId>s3proxy</artifactId>
-  <version>3.0.1-SNAPSHOT</version>
+  <version>3.0.1</version>
   <packaging>jar</packaging>
 
   <name>S3Proxy</name>
@@ -28,7 +28,7 @@
     <connection>scm:git:https://github.com/tomitribe/s3proxy.git</connection>
     <developerConnection>scm:git:git@github.com:tomitribe/s3proxy.git</developerConnection>
     <url>https://github.com/tomitribe/s3proxy</url>
-    <tag>HEAD</tag>
+    <tag>s3proxy-3.0.1</tag>
   </scm>
 
   <developers>
