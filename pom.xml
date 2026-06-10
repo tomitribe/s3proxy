@@ -140,7 +140,7 @@
         </executions>
         <configuration>
           <configLocation>src/main/resources/checkstyle.xml</configLocation>
-          <headerLocation>src/main/resources/copyright_header.txt</headerLocation>
+          <headerLocation>src/main/resources/copyright_header_regex.txt</headerLocation>
           <includeTestSourceDirectory>true</includeTestSourceDirectory>
           <violationSeverity>warning</violationSeverity>
           <failOnViolation>true</failOnViolation>

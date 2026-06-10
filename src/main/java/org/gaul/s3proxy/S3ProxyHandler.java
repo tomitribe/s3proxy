@@ -2210,23 +2210,25 @@ public class S3ProxyHandler {
     @SuppressWarnings("deprecation")  // Hashing.crc32{,c} are @Beta
     private static InputStream maybeValidateChecksum(
             HttpServletRequest request, InputStream is, long contentLength) {
-        String value;
-        if ((value = request.getHeader(
-                AwsHttpHeaders.CHECKSUM_SHA256)) != null) {
+        String sha256 = request.getHeader(AwsHttpHeaders.CHECKSUM_SHA256);
+        if (sha256 != null) {
             return new ChecksumValidatingInputStream(is, Hashing.sha256(),
-                    /*bigEndianInt=*/ false, "SHA256", value, contentLength);
-        } else if ((value = request.getHeader(
-                AwsHttpHeaders.CHECKSUM_SHA1)) != null) {
+                    /*bigEndianInt=*/ false, "SHA256", sha256, contentLength);
+        }
+        String sha1 = request.getHeader(AwsHttpHeaders.CHECKSUM_SHA1);
+        if (sha1 != null) {
             return new ChecksumValidatingInputStream(is, Hashing.sha1(),
-                    /*bigEndianInt=*/ false, "SHA1", value, contentLength);
-        } else if ((value = request.getHeader(
-                AwsHttpHeaders.CHECKSUM_CRC32)) != null) {
+                    /*bigEndianInt=*/ false, "SHA1", sha1, contentLength);
+        }
+        String crc32 = request.getHeader(AwsHttpHeaders.CHECKSUM_CRC32);
+        if (crc32 != null) {
             return new ChecksumValidatingInputStream(is, Hashing.crc32(),
-                    /*bigEndianInt=*/ true, "CRC32", value, contentLength);
-        } else if ((value = request.getHeader(
-                AwsHttpHeaders.CHECKSUM_CRC32C)) != null) {
+                    /*bigEndianInt=*/ true, "CRC32", crc32, contentLength);
+        }
+        String crc32c = request.getHeader(AwsHttpHeaders.CHECKSUM_CRC32C);
+        if (crc32c != null) {
             return new ChecksumValidatingInputStream(is, Hashing.crc32c(),
-                    /*bigEndianInt=*/ true, "CRC32C", value, contentLength);
+                    /*bigEndianInt=*/ true, "CRC32C", crc32c, contentLength);
         }
         // TODO: Guava does not support x-amz-checksum-crc64nvme
         return is;

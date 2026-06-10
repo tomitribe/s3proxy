@@ -127,9 +127,18 @@
     <module name="WhitespaceAfter"/>
     <module name="WhitespaceAround"/>
   </module>
-  <module name="Header">
+  <!--
+    RegexpHeader (not Header) so the copyright line is optional: the Apache
+    license block is required, but a "Copyright ..." line (and its trailing
+    blank comment line) may be present or absent.  multiLines="2,3" marks
+    those two header lines as repeatable zero or more times.  Temporary: to
+    be replaced when the fork updates groupId/parent pom and adopts its own
+    header.
+  -->
+  <module name="RegexpHeader">
     <property name="fileExtensions" value="java"/>
     <property name="headerFile" value="${checkstyle.header.file}"/>
+    <property name="multiLines" value="2,3"/>
   </module>
   <module name="RegexpSingleline">
     <property name="format" value="\s+$"/>
