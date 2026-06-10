@@ -1,14 +1,13 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <!-- TODO: introduce own parent, do not depend on 10 years old unmaintained parent -->
   <parent>
-    <groupId>org.sonatype.oss</groupId>
+    <groupId>org.tomitribe</groupId>
     <artifactId>oss-parent</artifactId>
-    <version>7</version>
+    <version>13</version>
   </parent>
 
-  <groupId>org.gaul</groupId>
+  <groupId>org.tomitribe.s3proxy</groupId>
   <artifactId>s3proxy</artifactId>
   <version>3.0.0</version>
   <packaging>jar</packaging>
@@ -129,6 +128,15 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-checkstyle-plugin</artifactId>
         <version>3.6.0</version>
+        <!--
+          Use this project's own checkstyle ruleset rather than the parent's:
+          the parent's rules flag structural aspects of the upstream code
+          (long methods, high parameter counts) that are out of scope to
+          refactor in a patched fork.  combine.self="override" discards the
+          parent's inherited inline <checkstyleRules> so configLocation is
+          honored, and the parent's verify-style execution is disabled to
+          avoid running checkstyle twice.
+        -->
         <executions>
           <execution>
             <id>check</id>
@@ -137,8 +145,12 @@
               <goal>check</goal>
             </goals>
           </execution>
+          <execution>
+            <id>verify-style</id>
+            <phase>none</phase>
+          </execution>
         </executions>
-        <configuration>
+        <configuration combine.self="override">
           <configLocation>src/main/resources/checkstyle.xml</configLocation>
           <headerLocation>src/main/resources/copyright_header_regex.txt</headerLocation>
           <includeTestSourceDirectory>true</includeTestSourceDirectory>
